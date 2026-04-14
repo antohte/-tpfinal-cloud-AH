@@ -17,7 +17,7 @@ const today = new Date().toLocaleDateString('fr-FR')
 }
 
 body {
-  background-color: white;
+  background-color: black;
 }
 
 .container {
