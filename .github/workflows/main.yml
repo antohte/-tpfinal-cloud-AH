@@ -1,0 +1,53 @@
+name: Build and Deploy Container
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          build-args: BUILD_ID=${{ github.sha }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/mon-app:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/mon-app:latest
+
+      - name: Afficher le resume
+        run: |
+          echo '## Build termine' >> $GITHUB_STEP_SUMMARY
+          echo 'Image poussee : ${{ secrets.DOCKERHUB_USERNAME }}/mon-app:${{ github.sha }}' >> $GITHUB_STEP_SUMMARY
+          echo 'URL App Service : https://appserviceconteneurr.azurewebsites.net' >> $GITHUB_STEP_SUMMARY
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Deploy to Azure App Service Container
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: AppServiceConteneurr
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/mon-app:${{ github.sha }}
+
+      - name: URL en ligne
+        run: |
+          echo '## Deploiement termine' >> $GITHUB_STEP_SUMMARY
+          echo 'App en ligne : https://appserviceconteneurr.azurewebsites.net' >> $GITHUB_STEP_SUMMARY
