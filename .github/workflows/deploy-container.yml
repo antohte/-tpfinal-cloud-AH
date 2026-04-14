@@ -13,24 +13,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Verifier les secrets
-        run: |
-          if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ]; then
-            echo "DOCKERHUB_USERNAME est VIDE"
-          else
-            echo "DOCKERHUB_USERNAME est present"
-          fi
-          if [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            echo "DOCKERHUB_TOKEN est VIDE"
-          else
-            echo "DOCKERHUB_TOKEN est present"
-          fi
-
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -39,13 +26,13 @@ jobs:
           push: true
           build-args: BUILD_ID=${{ github.sha }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/mon-app:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/mon-app:latest
+            ${{ secrets.DOCKER_USERNAME }}/mon-app:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/mon-app:latest
 
       - name: Afficher le resume
         run: |
           echo '## Build termine' >> $GITHUB_STEP_SUMMARY
-          echo 'Image poussee : ${{ secrets.DOCKERHUB_USERNAME }}/mon-app:${{ github.sha }}' >> $GITHUB_STEP_SUMMARY
+          echo 'Image poussee : ${{ secrets.DOCKER_USERNAME }}/mon-app:${{ github.sha }}' >> $GITHUB_STEP_SUMMARY
           echo 'URL App Service : https://appserviceconteneurr.azurewebsites.net' >> $GITHUB_STEP_SUMMARY
 
   deploy:
@@ -58,7 +45,7 @@ jobs:
         with:
           app-name: AppServiceConteneurr
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/mon-app:${{ github.sha }}
+          images: ${{ secrets.DOCKER_USERNAME }}/mon-app:${{ github.sha }}
 
       - name: URL en ligne
         run: |
