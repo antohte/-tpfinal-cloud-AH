@@ -3,11 +3,9 @@ name: Build and Deploy Container
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -24,30 +22,11 @@ jobs:
         with:
           context: .
           push: true
-          build-args: BUILD_ID=${{ github.sha }}
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/mon-app:${{ github.sha }}
-            ${{ secrets.DOCKER_USERNAME }}/mon-app:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/mon-app:latest
 
-      - name: Afficher le resume
-        run: |
-          echo '## Build termine' >> $GITHUB_STEP_SUMMARY
-          echo 'Image poussee : ${{ secrets.DOCKER_USERNAME }}/mon-app:${{ github.sha }}' >> $GITHUB_STEP_SUMMARY
-          echo 'URL App Service : https://appserviceconteneurr.azurewebsites.net' >> $GITHUB_STEP_SUMMARY
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    steps:
-      - name: Deploy to Azure App Service Container
+      - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: AppServiceConteneurr
+          app-name: APPCONTENEURPTFINAL
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: ${{ secrets.DOCKER_USERNAME }}/mon-app:${{ github.sha }}
-
-      - name: URL en ligne
-        run: |
-          echo '## Deploiement termine' >> $GITHUB_STEP_SUMMARY
-          echo 'App en ligne : https://appserviceconteneurr.azurewebsites.net' >> $GITHUB_STEP_SUMMARY
+          images: ${{ secrets.DOCKER_USERNAME }}/mon-app:latest
